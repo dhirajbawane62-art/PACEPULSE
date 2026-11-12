@@ -1,0 +1,320 @@
+`html
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+<meta name="google-site-verification" content="rfqHqICBvDvMDFgMaMnQ9QB8tZwcc80iU8SJFYJiyUw" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PacePulse | Advanced Fitness & Activity Calculator</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        pulse: {
+                            50: '#ecfdf5',
+                            400: '#34d399',
+                            500: '#10b981',
+                            600: '#059669',
+                        },
+                        electric: {
+                            400: '#38bdf8',
+                            500: '#06b6d4',
+                            600: '#0284c7',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+        }
+        .dark .glass-panel {
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .gradient-text {
+            background: linear-gradient(135deg, #10b981 0%, #06b6d4 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .gradient-bg {
+            background: linear-gradient(135deg, #10b981 0%, #0284c7 100%);
+        }
+        /* Custom range styling */
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 20px;
+            width: 20px;
+            border-radius: 50%;
+            background: #10b981;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 dark:bg-slate-950 dark:text-slate-100 transition-colors duration-300 min-h-screen flex flex-col">
+
+    <!-- Header Navigation -->
+    <header class="sticky top-0 z-40 w-full glass-panel border-b border-slate-200/80 dark:border-slate-800/80">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between">
+            
+            <!-- Logo -->
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl gradient-bg flex items-center justify-center text-white shadow-lg shadow-emerald-500/20">
+                    <i class="fa-solid fa-person-walking text-xl"></i>
+                </div>
+                <div>
+                    <span class="text-xl font-black tracking-tight text-slate-900 dark:text-white">PACE<span class="gradient-text">PULSE</span></span>
+                    <span class="hidden sm:inline-block text-[10px] uppercase font-bold tracking-widest px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-500 ml-2">Activity Engine</span>
+                </div>
+            </div>
+
+            <!-- Header Controls & Units Toggle -->
+            <div class="flex items-center space-x-2 sm:space-x-4">
+<!-- Reset All Data Button -->
+                <button onclick="openResetModal()" title="Reset All Data" class="px-2.5 sm:px-3 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 text-xs font-bold transition-colors flex items-center space-x-1.5 border border-rose-500/20">
+                    <i class="fa-solid fa-trash-can"></i>
+                    <span class="hidden md:inline">Reset All</span>
+                </button>
+
+                <!-- Unit Switcher -->
+                <div class="flex items-center bg-slate-200/80 dark:bg-slate-800/80 p-1 rounded-xl text-xs font-bold">
+                    <button id="unitMetricBtn" onclick="setUnitSystem('metric')" class="px-3 py-1.5 rounded-lg transition-all bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm">Metric (km/kg)</button>
+                    <button id="unitImperialBtn" onclick="setUnitSystem('imperial')" class="px-3 py-1.5 rounded-lg transition-all text-slate-500 dark:text-slate-400">Imperial (mi/lbs)</button>
+                </div>
+
+                <!-- Theme Toggle Button -->
+                <button id="themeToggleBtn" aria-label="Toggle Dark Mode" class="p-2.5 rounded-xl bg-slate-200/80 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors">
+                    <i id="themeToggleIcon" class="fa-solid fa-moon"></i>
+                </button>
+
+                <!-- Account Authentication Section -->
+                <div id="authContainer" class="flex items-center">
+                    <button id="authLoginBtn" onclick="openAuthModal('login')" class="px-4 py-2 rounded-xl gradient-bg text-white text-xs font-bold shadow-md shadow-emerald-500/20 hover:scale-105 transition-all flex items-center space-x-1.5">
+                        <i class="fa-solid fa-right-to-bracket"></i>
+                        <span>Log In</span>
+                    </button>
+                    <div id="userProfileBadge" class="hidden flex items-center space-x-2 pl-2 border-l border-slate-300 dark:border-slate-700">
+                        <div class="w-9 h-9 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-500 font-bold flex items-center justify-center text-xs" id="userAvatar">
+                            U
+                        </div>
+                        <div class="hidden md:block text-left">
+                            <p id="userNameDisplay" class="text-xs font-bold text-slate-900 dark:text-white leading-tight">User</p>
+                            <p id="userContactDisplay" class="text-[10px] text-slate-400 truncate max-w-[130px]">+91 9876543210</p>
+                        </div>
+                        <button onclick="handleLogout()" title="Log Out" class="p-2 text-slate-400 hover:text-red-500 transition-colors">
+                            <i class="fa-solid fa-arrow-right-from-bracket text-xs"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Dashboard Body -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+        
+        <!-- Quick Stats Overview Bar -->
+        <section class="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
+            
+            <!-- Total Steps Card -->
+            <div class="glass-panel p-5 rounded-2xl relative overflow-hidden group hover:border-emerald-500/50 transition-all">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-xs font-bold uppercase tracking-wider text-slate-400">Total Steps Today</p>
+                        <h3 id="statTotalSteps" class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mt-1">0</h3>
+</div>
+                    <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center text-lg">
+                        <i class="fa-solid fa-shoe-prints"></i>
+                    </div>
+                </div>
+                <div class="mt-4 flex items-center text-xs text-slate-500 dark:text-slate-400">
+                    <span id="statGoalPercent" class="font-bold text-emerald-500 mr-1.5">0%</span> of daily target
+                </div>
+            </div>
+
+            <!-- Total Distance Card -->
+            <div class="glass-panel p-5 rounded-2xl relative overflow-hidden group hover:border-cyan-500/50 transition-all">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-xs font-bold uppercase tracking-wider text-slate-400">Distance Travelled</p>
+                        <h3 id="statDistance" class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mt-1">0.00 km</h3>
+                    </div>
+                    <div class="w-10 h-10 rounded-xl bg-cyan-500/10 text-cyan-500 flex items-center justify-center text-lg">
+                        <i class="fa-solid fa-route"></i>
+                    </div>
+                </div>
+                <div class="mt-4 flex items-center text-xs text-slate-500 dark:text-slate-400">
+                    Based on <span id="statStride" class="font-semibold text-slate-700 dark:text-slate-300 mx-1">0.75m</span> stride
+                </div>
+            </div>
+
+            <!-- Calories Burned Card (Active + BMR) -->
+            <div class="glass-panel p-5 rounded-2xl relative overflow-hidden group hover:border-orange-500/50 transition-all">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-xs font-bold uppercase tracking-wider text-slate-400">Est. Total Burn</p>
+                        <h3 id="statCalories" class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mt-1">0 kcal</h3>
+                    </div>
+                    <div class="w-10 h-10 rounded-xl bg-orange-500/10 text-orange-500 flex items-center justify-center text-lg">
+                        <i class="fa-solid fa-fire"></i>
+                    </div>
+                </div>
+                <div class="mt-4 flex items-center text-xs text-slate-500 dark:text-slate-400">
+                    Active: <span id="statActiveCal" class="font-bold text-orange-500 mx-1">0 kcal</span> | BMR: <span id="statBmrCal" class="font-semibold text-slate-700 dark:text-slate-300 ml-1">--</span>
+                </div>
+            </div>
+
+            <!-- Active Duration Card -->
+            <div class="glass-panel p-5 rounded-2xl relative overflow-hidden group hover:border-indigo-500/50 transition-all">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-xs font-bold uppercase tracking-wider text-slate-400">Active Duration</p>
+                        <h3 id="statActiveTime" class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mt-1">0 mins</h3>
+                    </div>
+                    <div class="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-500 flex items-center justify-center text-lg">
+                        <i class="fa-solid fa-stopwatch"></i>
+                    </div>
+                </div>
+                <div class="mt-4 flex items-center text-xs text-slate-500 dark:text-slate-400">
+                    Pace avg: <span id="statAvgPace" class="font-semibold text-slate-700 dark:text-slate-300 ml-1">0.0 km/h</span>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- Comprehensive Body Biometrics Bar & Health Dashboard -->
+<section class="glass-panel p-6 sm:p-8 rounded-3xl space-y-6 shadow-xl border border-slate-200/80 dark:border-slate-800/80">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                    <h2 class="text-xl font-bold text-slate-900 dark:text-white flex items-center">
+                        <i class="fa-solid fa-heart-pulse text-rose-500 mr-2.5"></i> Biometric Body Profile & Metabolic Diagnostics
+                    </h2>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Enter your body measurements to calculate personalized biomarkers, heart zones & macros.</p>
+                </div>
+                <button onclick="openBiometricsModal()" class="px-4 py-2 rounded-xl gradient-bg text-white text-xs font-bold shadow-md shadow-emerald-500/20 hover:scale-105 transition-all flex items-center space-x-1.5">
+                    <i class="fa-solid fa-sliders"></i>
+                    <span>Enter / Edit Body Details</span>
+                </button>
+            </div>
+
+            <!-- Key Biometrics Grid -->
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                <!-- BMI -->
+                <div class="p-4 rounded-2xl bg-slate-100/70 dark:bg-slate-800/60 border border-slate-200/50 dark:border-slate-700/50">
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">BMI Index</span>
+                    <p id="bioBmi" class="text-xl font-black text-slate-900 dark:text-white mt-1">--</p>
+                    <span id="bioBmiCategory" class="inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-bold bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400">Enter height & weight</span>
+                </div>
+
+                <!-- BMR -->
+                <div class="p-4 rounded-2xl bg-slate-100/70 dark:bg-slate-800/60 border border-slate-200/50 dark:border-slate-700/50">
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">BMR (Basal Rate)</span>
+                    <p id="bioBmr" class="text-xl font-black text-slate-900 dark:text-white mt-1">--</p>
+                    <span id="bioBmrSub" class="text-[10px] text-slate-400">Enter details to calculate</span>
+                </div>
+
+                <!-- TDEE -->
+                <div class="p-4 rounded-2xl bg-slate-100/70 dark:bg-slate-800/60 border border-slate-200/50 dark:border-slate-700/50">
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">TDEE (Daily Energy)</span>
+                    <p id="bioTdee" class="text-xl font-black text-slate-900 dark:text-white mt-1">--</p>
+                    <span id="bioTdeeSub" class="text-[10px] text-slate-400">Enter details to calculate</span>
+                </div>
+
+                <!-- Body Fat & Muscle -->
+                <div class="p-4 rounded-2xl bg-slate-100/70 dark:bg-slate-800/60 border border-slate-200/50 dark:border-slate-700/50">
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Body Composition</span>
+                    <p id="bioFatMuscle" class="text-sm font-bold text-slate-900 dark:text-white mt-1">-- Fat / -- Muscle</p>
+                    <span id="bioWhr" class="text-[10px] text-slate-400">WHR: --</span>
+                </div>
+
+                <!-- Hydration Tracker -->
+                <div class="p-4 rounded-2xl bg-blue-500/10 border border-blue-500/20">
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-blue-500">Hydration</span>
+                    <div class="flex items-center justify-between mt-1">
+                        <p id="bioWater" class="text-lg font-black text-slate-900 dark:text-white">0.0 / -- L</p>
+<button onclick="addWater(0.25)" title="Add 250ml Water" class="w-6 h-6 rounded-full bg-blue-500 text-white flex items-center justify-center text-xs hover:scale-110 transition-transform">
+                            <i class="fa-solid fa-plus"></i>
+                        </button>
+                    </div>
+                    <div class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-1.5 mt-2 overflow-hidden">
+                        <div id="waterProgressBar" class="bg-blue-500 h-1.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <!-- Sleep & Recovery Score -->
+                <div class="p-4 rounded-2xl bg-indigo-500/10 border border-indigo-500/20">
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-indigo-500">Sleep & Recovery</span>
+                    <p id="bioSleep" class="text-xl font-black text-slate-900 dark:text-white mt-1">--</p>
+                    <div id="bioRecoveryWrap" class="flex items-center space-x-1 mt-1 text-[10px]">
+                        <span class="text-slate-400">Log sleep in biometrics</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Heart Rate Zones & Daily Macro Target Breakdown -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+                <!-- Target Heart Rate Zones -->
+                <div class="p-5 rounded-2xl bg-slate-100/50 dark:bg-slate-800/40 border border-slate-200/50 dark:border-slate-700/50 space-y-3">
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
+                        <span>Cardiovascular Target Heart Rate Zones</span>
+                        <span id="bioMaxHr" class="text-rose-500 font-extrabold">Max HR: --</span>
+                    </h4>
+                    <div class="space-y-2">
+                        <div>
+                            <div class="flex justify-between text-xs font-semibold mb-1">
+                                <span class="text-emerald-500">Fat Burn Zone (60-70%)</span>
+                                <span id="hrFatBurn" class="text-slate-700 dark:text-slate-300">--</span>
+                            </div>
+                            <div class="w-full bg-slate-200 dark:bg-slate-700 h-2 rounded-full overflow-hidden">
+                                <div id="hrBarFatBurn" class="bg-emerald-500 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-xs font-semibold mb-1">
+                                <span class="text-amber-500">Aerobic / Cardio Zone (70-85%)</span>
+                                <span id="hrCardio" class="text-slate-700 dark:text-slate-300">--</span>
+                            </div>
+                            <div class="w-full bg-slate-200 dark:bg-slate-700 h-2 rounded-full overflow-hidden">
+                                <div id="hrBarCardio" class="bg-amber-500 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-xs font-semibold mb-1">
+                                <span class="text-rose-500">Peak Anaerobic Zone (85-100%)</span>
+                                <span id="hrPeak" class="text-slate-700 dark:text-slate-300">--</span>
+                            </div>
+                            <div class="w-full bg-slate-200 dark:bg-slate-700 h-2 rounded-full overflow-hidden">
+                                <div id="hrBarPeak" class="bg-rose-500 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+<!-- Macro Breakdown Recommendation -->
+                <div class="p-5 rounded-2xl bg-slate-100/50 dark:bg-slate-800/40 border border-slate-200/50 dark:border-slate-700/50 space-y-3">
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
+                        <span>Daily Recommended Macronutrient Split</span>
+                        <span class="text-slate-500">Based on TDEE</span>
+                    </h4>
+                    <div class="grid grid-cols-3 gap-3 text-center pt-1">
+                        <div class="p-3 round
